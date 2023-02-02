@@ -15,6 +15,14 @@ library(ggplot2)
 library(stats)
 library(ggpubr)
 
+transpose_df <- function (df) {
+  df <- as.data.frame(t(df))
+  row.names(df) < df$V1
+  colnames(df) <-df[1,]
+  df$X <- NULL
+  df <- sapply(df, function (x) as.integer(x))
+  return(df[1:80])
+}
 gg_plot_clust_summary.total <- function(df, c1) 
 {return(ggarrange(ggplot_symptomp_coherence(df, c1), 
                   ggplot_orthongalD_sex(c1), ggplot_orthongalD_age(c1),  
@@ -72,10 +80,10 @@ ggplot_symptomp_coherence <- function(df.thumb, clust) {
   df <- data.frame(row.names = 
                      head(row.names(df.Sumfreq.symptomps)
                           [order(df.Sumfreq.symptomps$sum, decreasing = T)],
-                          n =6), sum =  
+                          n =15), sum =
                      head(df.Sumfreq.symptomps
                           [order(df.Sumfreq.symptomps$sum, decreasing = T),],
-                          n =6) )
+                          n =15) )
   
   # group the symptomps per domain
   c.groupings.freq <- function(v){
