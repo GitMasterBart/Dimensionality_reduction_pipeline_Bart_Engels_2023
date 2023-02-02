@@ -4,28 +4,18 @@ args <- commandArgs(trailingOnly=TRUE)
 if (length(args) == 0 ) {
   args[1] <- 3 }
 
-library(stats)
-library(dplyr)
-library(forcats)
-library(viridis)
-library(ggplot2)
-library(ggsignif)
-library(readxl)
-library(MASS)
-library(ggsignif)
-library(tidyverse)
 library(psych)
-library(ggplot2)
-library(stats)
-library(ggpubr)
-library(ggdendro)
-library(tidyverse)  # data manipulation
-library(cluster)    # clustering algorithms
-library(factoextra)
 library(Dict)
+library(paran)
 
-source(paste("/Users/bengels/Desktop/stage_umcg2022/scripts", "/Pipeline/scripts/r/file_names.R", sep = ""))
-pca.df.temporal <- read.csv(paste(ROOT_FOLDER,"/Pipeline/Output/ouput_pca.csv", sep = ""))
+source(paste("/Users/bengels/Desktop/stage_umcg2022/scripts", "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R", sep = ""))
+pca.df.temporal <- read.csv(paste(ROOT_FOLDER,"/Output/ouput_pca.csv", sep = ""))
+
+p <- paran(pca.df.temporal, centile = 0, quietly = FALSE,
+      status = TRUE, all = TRUE, cfa = TRUE, graph = TRUE, color = TRUE,
+      col = c("black", "red", "blue"), lty = c(1, 2, 3), lwd = 1, legend = TRUE,
+      file = "", width = 640, height = 640, grdevice = "png", seed = 0)
+
 
 
 alpha <- (fa.sapa(pca.df.temporal, nfactors = as.integer(args[1])  ,rotate= "varimax", fm = "alpha",
@@ -54,10 +44,8 @@ cum_list <- Dict$new("alpha" = alpha,
                      "Maximum likelihood"  = ml,
                       "uls" = uls,
                        "minimal residual" = old.min,
-                      "minimum rank "= minrank)
-
-cum_list <- Dict$new("Principal Axisis"  = pa,
-                     "Maximum likelihood"  = ml)
+                      "minimum rank "= minrank,
+                      "Weighted least squared" = wls)
 
 h <- 0
 method_name <- ""
@@ -73,6 +61,6 @@ print(paste("Best Method: ", method_name, ",", "Cumsum: ", round(h, 3)))
 
 fa.df.temp <- data.frame(method$scores)
 
-write.csv(fa.df.temp, paste(ROOT_FOLDER, "/Pipeline/Output/factor_analysis.csv", sep = "") , row.names=F)
+write.csv(fa.df.temp, paste(ROOT_FOLDER, "/Output/factor_analysis.csv", sep = "") , row.names=F)
 
-print(paste("Dataframe; with compontes is saved at: ", ROOT_FOLDER, "/Pipeline/Output/factor_analysis.csv", sep = ""))
+print(paste("Dataframe; with compontes is saved at: ", ROOT_FOLDER, "/Output/factor_analysis.csv", sep = ""))
