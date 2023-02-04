@@ -29,16 +29,15 @@ library(tidyverse)
 
     pal <- c(
       "#FFB400", lighten("#8CA252", .25, space = "HLS"),
-      "#C20008", lighten("#C20008", .2, space = "HLS"),
+      "#C20008", lighten("#6E3562", .2, space = "HLS"),
       "#13AFEF", lighten("#595A52", .25, space = "HLS"),
-      "#8E038E", lighten("#8E038E", .2, space = "HLS"),
-      "#595A52", lighten("#607c3c", .15, space = "HLS"),
-      "#8CA252", lighten("#8CA252", .25, space = "HLS"),
-      "#809c13", lighten("#809c13", .2, space = "HLS"),
-      "#607c3c", lighten("#607c3c", .2, space = "HLS")
+      "#8E038E", lighten("#FBCE3A", .2, space = "HLS"),
+      "#595A52", lighten("#8390fa", .15, space = "HLS"),
+      "#008000", lighten("#6495ED", .25, space = "HLS"),
+      "#D2691E", lighten("#00cecb", .2, space = "HLS"),
+      "#FF4500", lighten("#d1495b", .2, space = "HLS")
 
     )
-
     # df_char_vis <- df_char_vis %>%
     #   relocate(clust2, .before = clust4 )
 
@@ -126,7 +125,7 @@ library(tidyverse)
         panel.spacing.y = unit(0, "lines"),
         strip.text.y = element_blank(),
         legend.position = "bottom",
-        legend.text = element_text(size = 9, color = "grey40"),
+        legend.text = element_text(size = 15, color = "grey40"),
         legend.box.margin = margin(t = 30),
         legend.background = element_rect(
           color = "grey40",
@@ -135,11 +134,10 @@ library(tidyverse)
         ),
         legend.key.height = unit(.25, "lines"),
         legend.key.width = unit(2.5, "lines"),
-        plot.margin = margin(rep(20, 4))
+        plot.margin = margin(rep(40, 8))
       )
 
-    g <- g +
-      geom_vline(
+    g <- g + geom_vline(
         data = tibble(x = c(end.year, seq(end.year, 0, by = -5), 0)),
         aes(xintercept = x),
         inherit.aes = FALSE,
@@ -161,8 +159,8 @@ library(tidyverse)
       ) +
       scale_x_continuous(
         limits = c(0, NA),
-        breaks = c(end.year, seq(end.year, 0, by = -5), 0),
-        labels = glue::glue("Year\n{c(-0, seq(0, -{end.year}, by = -5), -{end.year})}"),
+        breaks = c(0, seq(0, end.year, by = 10), end.year),
+        labels = glue::glue("Year\n{c(0, seq(0, {end.year}, by = 10), -{end.year})}"),
         position = "top"
       ) +
       # Customize labels of the horizontal axis
@@ -170,8 +168,8 @@ library(tidyverse)
       # This clip="off" is very important. It allows to have annotations anywhere
       # in the plot, no matter they are not within the extent of
       # the corresponding panel.
-      coord_cartesian(clip = "off") +
-      scale_x_reverse()
+       coord_cartesian(clip = "off") #+
+      #scale_x_reverse()
 
 
     g <- g +
@@ -182,5 +180,5 @@ library(tidyverse)
 
   g
 
-  ggsave(paste(ROOT_FOLDER ,"/Output/img/", folder, "/" , levels,".png", sep = ""), g )
+  ggsave(paste(ROOT_FOLDER ,"/Output/img/", folder, "/" , levels,".png", sep = ""), g ,width = 24, height = 9)
 }}

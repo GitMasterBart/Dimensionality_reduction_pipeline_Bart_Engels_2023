@@ -17,8 +17,8 @@ library(ggpubr)
 
 transpose_df <- function (df) {
   df <- as.data.frame(t(df))
-  row.names(df) < df$V1
-  colnames(df) <-df[1,]
+  row.names(df) < df$X
+  #colnames(df) <-df[1,]
   df$X <- NULL
   df <- sapply(df, function (x) as.integer(x))
   return(df[1:80])
@@ -71,11 +71,11 @@ ggplot_symptomp_diagnosis.total <- function(data, c){
 ggplot_symptomp_coherence <- function(df.thumb, clust) {
   
   # df subset df.thumb on clust1 data
-  df.logn1 <- log1p(df.thumb[1:(dim(df.thumb)[2]-3)])
+  df.logn1 <- df.thumb
   df.Sumfreq.symptomps <- 
     data.frame(sum = 
                  colSums(df.logn1[row.names(df.thumb)
-                                  %in% row.names(clust),][1:6640]))
+                                  %in% row.names(clust),][1:80]))
   
   df <- data.frame(row.names = 
                      head(row.names(df.Sumfreq.symptomps)

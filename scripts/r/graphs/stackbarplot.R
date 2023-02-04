@@ -1,4 +1,4 @@
-
+subset <- c("MD", "BP", "SCHIZ", "PSYCH", "DEPRI, PSYCH", "DEV", "ASD, PSYCH", "ADHD, PSYCH", "PTSD, PSYCH" , "OCD, PSYCH","NARCO, PSYCH", "PSYCH, DEPMA")
 
 stack_bar_plot <- function (cluster_set) return (ggplot(cluster_set, aes(fill=main_diagnosis, y=abs(cluster), x=cluster)) +
            geom_bar(position="fill", stat="identity") +
@@ -18,7 +18,18 @@ stack_bar_plot <- function (cluster_set) return (ggplot(cluster_set, aes(fill=ma
                                         "MSA" = "#FBCE3A",
                                         "MD" = "#00cecb",
                                         "SCHIZ" = "#008000",
-                                        "VD" = "red"
+                                        "VD" = "red",
+                                        "PTSD, PSYCH" = "blue",
+                                        "ASD, PSYCH" = "#E5FFCC",
+                                        "DEPRI, PSYCH" = "#FF4500",
+                                        "DEV" = "#00FF7F",
+                                        "ADHD, PSYCH" = "#191970",
+                                        "PSYCH" = "#FF00FF",
+                                        "OCD, PSYCH" = "#6495ED",
+                                        "NARCO, PSYCH" = "#D2691E",
+                                        "PSYCH, DEPMA" =  "#DEB887"
+
+
            ), name = "Diagnosis:") + theme(
         plot.title = element_text(
           size = 15,
