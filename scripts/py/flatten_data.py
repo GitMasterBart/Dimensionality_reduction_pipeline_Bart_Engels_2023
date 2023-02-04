@@ -25,6 +25,7 @@ def create_summed_data_matrix(boolean_temporal_df):
     append_data.to_csv(file_names.OUTPUTFILE_FLATTEND_DATA + 'flattend_data_02_02_23.csv')
 
 
+
 def open_pickl(pkl):
     with open(pkl, 'rb') as f:
         boolean_temporal_dfs = pickle.load(f)
