@@ -1,4 +1,5 @@
-PICKLE_FILE = "/Users/bengels/Desktop/stage_umcg2022/scripts/Dimensionality_reduction_pipeline_Bart_Engels_2023/Input/ALL_clinical_trajectories_dictionary_rules_of_thumb_yearly_2023-01-31.pkl"
-OUTPUTFILE_TEMPORAL_DATA = "/Users/bengels/Desktop/stage_umcg2022/scripts/Dimensionality_reduction_pipeline_Bart_Engels_2023/Output/"
-OUTPUTFILE_FLATTEND_DATA = "/Users/bengels/Desktop/stage_umcg2022/scripts/Dimensionality_reduction_pipeline_Bart_Engels_2023/Output/"
-GENERAL_INFO = "/Users/bengels/Desktop/stage_umcg2022/scripts/Dimensionality_reduction_pipeline_Bart_Engels_2023/Input/General_information_13-07-2022_FULL.csv"
+PICKLE_FILE =
+OUTPUTFILE_TEMPORAL_DATA =
+OUTPUTFILE_FLATTEND_DATA =
+GENERAL_INFO =
+ATTRIBUTE_GROUPING =
