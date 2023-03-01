@@ -16,7 +16,7 @@ import argparse
 import file_names
 import pandas as pd
 import generic_functions
-import converd_pickle_to_temporalData
+import pickle_parser
 from tqdm import tqdm
 import numpy as np
 
@@ -55,11 +55,11 @@ class PickleToTempBirth:
         for donor in tqdm(self.pickle_file):
             if self.bucked_size > 1:
                 # Obtain the data for each year
-                donor_dict[donor] = converd_pickle_to_temporalData. \
-                    dict_to_df_norm_birth_bucketsizeN(self.pickle_file.get(donor), donor,
-                                                      self.bucked_size, sign_sym)
+                donor_dict[donor] = pickle_parser. \
+                    dict_to_df_norm_birth_bucketsize_n(self.pickle_file.get(donor), donor,
+                                                       self.bucked_size, sign_sym)
             else:
-                donor_dict[donor] = converd_pickle_to_temporalData. \
+                donor_dict[donor] = pickle_parser. \
                     dict_to_df_norm_birth_bucketsize1(self.pickle_file.get(donor), donor)
             generic_functions.remove_empty_values(donor_dict)
         data_frame = pd.DataFrame.from_dict(donor_dict, orient="index")
@@ -113,11 +113,11 @@ class PickleToTempDeath(PickleToTempBirth):
         for i in tqdm(self.pickle_file):
             if self.bucked_size > 1:
                 # Obtain the data for each year
-                donor_dict[i] = converd_pickle_to_temporalData.dict_to_df_norm_death_bucketsizeN(
+                donor_dict[i] = pickle_parser.dict_to_df_norm_death_bucketsize_n(
                     self.pickle_file.get(i),
                     self.bucked_size, sign_sym)
             else:
-                donor_dict[i] = converd_pickle_to_temporalData.dict_to_df_norm_death_bucketsize1(
+                donor_dict[i] = pickle_parser.dict_to_df_norm_death_bucketsize1(
                     self.pickle_file.get(i))
             generic_functions.remove_empty_values(donor_dict)
         data_frame = pd.DataFrame.from_dict(donor_dict, orient="index")
@@ -131,14 +131,14 @@ def main():
     """
     parser = argparse.ArgumentParser(description='')
 
-    parser.add_argument("domain_list", type=str, nargs="*",
+    parser.add_argument("-d", dest="domain_list" , type=str, nargs="*",
                         default=["Psychiatric", "Cognitive", "General", "Motor", "Sensory"],
                         help="List with domains that are included")
-    parser.add_argument("bucket_size", type=int,
+    parser.add_argument("-b", dest="bucket_size", type=int,
                         help="integer that represents the size of the bucket")
-    parser.add_argument("csv_filename", type=str,
+    parser.add_argument("-f", dest= "csv_filename", type=str,
                         help="file name of the csv file that is included")
-    parser.add_argument("normalization", type=str,
+    parser.add_argument("-n", dest= "normalization",  type=str,
                         help="way of normalization")
     args = parser.parse_args()
 
