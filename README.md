@@ -89,8 +89,8 @@ birth or death. Upon pressing the "Enter" key, two loading bars will be displaye
 python pickle_to_tempdata.py -d Psychiatric General Cognitive Sensory Psychiatric -b 1 -f temporaldata_birth_1year_al.csv -n birth
 ```
 
-Now that you have set up the correct files you can follow op the Notebooks, how it works is explained in the notebooks.
-The following order would be recommended ;-D : 
+Now that you have set up the correct files you can follow the Notebooks, they can be found in `scripts/r/Notebooks`.
+<br>The following order would be recommended: 
 
 ```r
 Dimensionality reduction overview (step1, PCA).rmd -> Dimenesionaliryt reduction overview (step2, FA).rmd -> Dimensionaliry reduction overview (step3, K-means).rmd -> Dimensionality reduction overview (step4, visualistaion).rmd
