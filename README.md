@@ -90,7 +90,7 @@ python pickle_to_tempdata.py -d Psychiatric General Cognitive Sensory Psychiatri
 ```
 
 Now that you have set up the correct files you can follow op the Notebooks, how it works is explained in the notebooks.
-The following order would be preferred: 
+The following order would be recommended ;-D : 
 
 ```r
 Dimensionality reduction overview (step1, PCA).rmd -> Dimenesionaliryt reduction overview (step2, FA).rmd -> Dimensionaliry reduction overview (step3, K-means).rmd -> Dimensionality reduction overview (step4, visualistaion).rmd
