@@ -98,6 +98,12 @@ Dimensionality reduction overview (step1, PCA).rmd -> Dimenesionaliryt reduction
 ```
 **Succes!** If it is not clear [Contact](#contact) me!
 
+<details>
+  <summary><b>Extra and tips:</b></summary>
+  <p>If you want you can remove all the <code>.placeholders</code> they are only there to create a directory hierarchy.</p>
+</details>
+
+
 <a name="bibliografie"></a>
 *References:*
 
