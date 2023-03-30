@@ -1,0 +1,379 @@
+---
+title: "Visualization Notebook"
+output: html_notebook
+---
+
+### Loadings libraries
+```{r, message=FALSE, warning=FALSE}
+#!/usr/bin/env Rscript
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+library(pals)
+library(stringr)
+library(fmsb)
+```
+
+### Step1, Loading source files
+```{r}
+# add the path to your root
+path.ro.root <- ""
+# file-location file (Stores all the predifined locations in file "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R")
+source(paste(path.ro.root, "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R", sep = ""))
+# cluster information saved in k-means step3
+source(paste0(ROOT_FOLDER, "/scripts/r/graphs/clusters/plots_clusters.r"))
+# load general function file 
+source(paste0(ROOT_FOLDER, "/scripts/r/functions/General/general_functions.r"))
+# load temporal data visualiser for step 10
+source(paste(ROOT_FOLDER, "/scripts/r/graphs/temporal_data_visualiser.R", sep = ""))
+```
+
+
+### Step2, loading file paths
+
+```{r}
+# read cluster inforamtion 
+df.clusts <- read.csv(paste0(ROOT_FOLDER, "/Output/k-means/cluster_information.csv"), row.names = 1)
+# read general information
+df.gen <- read.csv(paste0(ROOT_FOLDER, "/Input/meta_data/General_information_13-07-2022_FULL.csv"), row.names = 1)
+# read falltened summed file
+df.summed <- read.csv(paste0(ROOT_FOLDER, SUMMED_FILE), row.names =1)
+```
+
+### Step3, merge general information and cluster information.
+
+```{r}
+# use change NBB form general functions
+# to equal the row.names of all datasets
+df.clusts <- change_NBB_Id(df.clusts)
+df.gen <- change_NBB_Id(df.gen)
+# merge the clusted with the summed data_frame
+df.clust.summed <- merge(df.clusts, df.summed, by = 0, row.names = 0)
+# remove redundant columns
+row.names(df.clust.summed) <- df.clust.summed$Row.names
+df.clust.summed$Row.names <- NULL
+# merge general info with cluster information
+df.clust.gen <- merge(df.gen, df.clusts, by = 0, row.names = 0)
+```
+
+
+# Step4, visualize the symptom distribution over the clusters.
+
+```{r}
+# create graph1 stackbar plot
+(Graph1 <- stack_bar_plot(df.clusts) + theme_bw()  + xlab("") + ylab("")+ 
+    labs(tag = "A") +theme(plot.title = element_text(hjust = 0.5),
+        plot.tag = element_text(size = 15),
+        plot.tag.position = c(.95, .95)) )
+# wirte graph one to output directory
+ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/", "clusts_stackbarplot",".png", sep = ""), Graph1 , limitsize = FALSE)
+# save the distribution of the clusters:
+
+(Graph2 <- barclustercount(data.frame(table(df.clusts$cluster))))
+ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/", "frequancy_barplot",".png", sep = ""), Graph2, height =7)
+
+
+ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/", "Figure_frequency_stackbarplot",".png", sep = ""),
+       ggarrange(Graph1, Graph2, crow = 2), width = 18, height =12 , dpi = 150, units = "in", device='png')
+ 
+```
+
+
+### Step 5,  age-distributions Graphs (AGE of donor and AGE of file)
+
+```{r}
+# returns the age distriubion graph
+(Graph3 <- age_distribution_graph(df.clust.gen))
+
+ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/", "Age_distribuiton_per_cluster",".png", sep = ""),
+        Graph3  ,width = 20, height =20 , dpi = 150, units = "in", device='png')
+```
+
+
+
+```{r}
+
+df.clust.gen$date <- as.Date(df.clust.gen$Date_and_time_of_death, format= "%d/%m/%Y")
+
+df.clust.gen$dateY <- str_extract(df.clust.gen$date,  regex("(19[89][0-9]|20[0-4][0-9]|2050)"))
+
+(Graph4 <- ggplot(df.clust.gen, aes(cluster,as.integer(dateY), fill=as.character(cluster) )) +
+    geom_violin() +
+  geom_boxplot(width=0.06, color="grey", alpha=0.2) +
+  scale_fill_manual(values=c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" )) +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  labs(x="Cluster numbers", y="file-age (in Years)",  color = "Legend", fill = "clusters") +
+  ggtitle("file-age distribution for each cluster")
+)
+
+
+df <- data.frame()
+df.t.subset <- data.frame()
+for (i in 1:length(unique(df.clust.summed$cluster))){
+
+# create a dataframe that uses differend representations of the same data, used for further visualisations
+col_sums <- data.frame(freq = colSums(df.clust.summed[df.clust.summed$cluster == i,][(dim(df.clusts)[2] + 1): (80+(dim(df.clusts)[2]))] ), cluster = i)
+col_sums$symptom <- row.names(col_sums)
+col_sums$sum <- sum(df.clust.summed[df.clust.summed$cluster == i,][(dim(df.clusts)[2] + 1):(dim(df.clusts)[2] + 80)])
+col_sums$frac <- ( dim(df.clust.summed[df.clust.summed$cluster == i,])[1]) * col_sums$freq
+col_sums$perc <- round(col_sums$freq / col_sums$sum * 100, 2)
+df <- rbind(df, head(col_sums[order(col_sums$freq, decreasing = T),], n =5))
+df.t.subset <- rbind(df.t.subset, head(col_sums[order(col_sums$frac, decreasing = T),], n =(dim(df.clusts)[2] + 80)))}
+```
+
+
+### Step 6, barplot of each cluster that represent the percentage of a sign/symptom
+
+```{r}
+# number of signs/symptom subsets, depending on the analysis you can add signs/symptoms
+symptoms <- c('Depressed_mood','Suicidal_ideation', 'Anxiety', 'Psychosis', 'Mania', 'Paranoia_suspiciousness',  'Hallucinations', "Confusion", 'Psychiatric_admissions')
+# symptoms <- c( 'Dementia','Memory_impairment', 'Aphasia', 'Apraxia',
+#                  'Fatigue',
+#                  'Admission_to_nursing_home', 'Forgetfulness','Admission_to_nursing_home',                "Concentration_problems"
+#             )
+#symptoms <- c("Muscular_Weakness","Mobility_problems", "Parkinsonism", "Bradykinesia", "Dementia", "Admission_to_nursing_home", "Memory_impairment", "Disorientation", "Urinary_incontinence", "Fatigue")
+#symptoms <- c("Muscular_Weakness","Mobility_problems", "Parkinsonism", "Bradykinesia", "Dementia", "Admission_to_nursing_home", "Memory_impairment", "Disorientation", "Urinary_incontinence", "Rigidity", "Depressed_mood", "Disorientation")
+
+
+df.c <- data.frame(row.names = row.names(df.clusts), clusters = df.clusts$cluster)
+df.symptoomrepesentie <- merge(df.summed[1:80], df.c , by = 0)
+row.names(df.symptoomrepesentie) <- df.symptoomrepesentie$Row.names
+df.symptoomrepesentie$Row.names <- NULL
+
+
+## use only the number of clusters that are present in the anlaysis.
+cluster.count.df<- data.frame(cluster1 = colSums(df.symptoomrepesentie[df.symptoomrepesentie$clusters == 1,]),
+           cluster2 = colSums(df.symptoomrepesentie[df.symptoomrepesentie$clusters == 2,]),
+            cluster3= colSums(df.symptoomrepesentie[df.symptoomrepesentie$clusters == 3,]),
+           cluster4 = colSums(df.symptoomrepesentie[df.symptoomrepesentie$clusters == 4,]))
+           #cluster5 = colSums(df.symptoomrepesentie[df.symptoomrepesentie$clusters == 5,]))
+cluster.count.df <- cluster.count.df[-81,]
+
+## use only the number of clusters that are present in the anlaysis.
+cluster.count.df.perc<- data.frame(row.names = row.names(cluster.count.df),cluster1 = (cluster.count.df$cluster1/colSums(cluster.count.df)[1]) * 100,
+           cluster2 = cluster.count.df$cluster2/colSums(cluster.count.df)[2] * 100,
+           cluster3 = cluster.count.df$cluster3/colSums(cluster.count.df)[3] * 100,
+           cluster4 = cluster.count.df$cluster4/colSums(cluster.count.df)[4] * 100)
+           #cluster5 = cluster.count.df$cluster5/colSums(cluster.count.df)[5] * 100)
+           #cluster6 = cluster.count.df$cluster6/colSums(cluster.count.df)[6] * 100)
+
+
+
+## use only the number of clusters that are present in the anlaysis.
+(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster2, decreasing = T),])
+(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster1, decreasing = T),])
+(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster3, decreasing = T),])
+(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster4, decreasing = T),])
+#(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster5, decreasing = T),])
+#(ordered.data.cluster.symptoms <- cluster.count.df.perc[order(cluster.count.df.perc$cluster6, decreasing = T),])
+melted.df <- data.frame(melt(t(subset(ordered.data.cluster.symptoms, row.names(ordered.data.cluster.symptoms) %in% symptoms)),na.rm = FALSE))
+
+# plots a overview smaller overview (symptoms that are difined in the variable symptoms)  of the persentage of signs/symptoms that are pressent
+# relative to the number of total symptoms.
+ggsave(paste(ROOT_FOLDER, "/Output/clusts/img/cluster_overview" , ".png", sep = ""),melted.df %>% ggplot(aes(fill=Var1, y=value, x=Var2)) +
+    geom_bar(position="dodge", stat="identity") +
+    scale_fill_viridis(discrete = T, option = "E") +
+    ggtitle("Percentage of symptom occurrence") +
+    facet_wrap(~Var1) +
+    theme_ipsum() +
+    theme(legend.position="none") +
+    xlab("")+
+    scale_fill_manual(values=c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" )) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)))
+
+# plots a barplots of the 15 most frequent signs/symptoms per cluster
+ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/symptom_freq/", "bartplot_clusters",".png", sep = ""), Graph2)
+for (i in 1:clusters) print(ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/symptom_freq/", "cluster_symptomsfrequancy", i , ".png", sep = ""),
+                                   ggplot_symptomp_coherence(df.summed,df.clusts[df.clusts$cluster == i,]) + ggtitle(paste("Cluster",i))))
+```
+
+
+### step 8, prepare data for radar plot
+Calculate the presents of a symptom in a
+cluster based on the frequency of the symptoms relative to the total number of symptoms
+
+```{r}
+df.t <- data.frame()
+for (i in 1:length(unique(df.clust.summed$cluster))){
+  # print( (sum(data_frame.clust.summed[data_frame.clust.summed$cluster == i,][(dim(data_frame.clusts)[2] + 1):(dim(data_frame.clusts)[2] + 80)]) /
+  #   colSums(data_frame.clust.summed[data_frame.clust.summed$cluster == i,][(dim(data_frame.clusts)[2] + 1):(dim(data_frame.clusts)[2] + 80)])[1] ) / 100 )
+  print(sum(df.clust.summed[df.clust.summed$cluster == i,][(dim(df.clusts)[2] + 1):(dim(df.clusts)[2] + 80)]))
+
+  # frac = ( (totalsymptom / group_size) / 100 ) * symptoms
+  df.t <- rbind(df.t, data.frame(row.names = paste("cluster",i),
+                                      t(data.frame(frac = (((sum(df.clust.summed[df.clust.summed$cluster == i,][(dim(df.clusts)[2] + 1):(dim(df.clusts)[2] + 80)]) /
+                                        dim(df.clust.summed[df.clust.summed$cluster == i,])[1] ) / 100) )*                                                                     colSums(df.clust.summed[df.clust.summed$cluster == i,][(dim(df.clusts)[2] + 1):80] )))))
+}
+df.t <- rbind(rep(max(df.t),75) , rep(0,75) , df.t)
+
+
+df.t[,colnames(df.t) %in% head(row.names(df), n = 6)]
+
+
+```
+
+Set symptom list, and include only the lists with sigs/symptoms that is of interest.
+
+```{r}
+# domains defined by Mekkes at all. (2022)
+list_psych <- c('Compulsive_behavior', 'Aggressive_behavior', 'Agitation', 'Anxiety',
+                'Changed_moods_emotions', 'Depressed_mood', 'Mania', 'Restlessness',
+                'Disorientation', 'Lack_of_insight', 'Wandering', 'Confusion',
+                'Day_night_rhythm_disturbances', 'Delirium', 'Delusions',
+                'Hallucinations', 'Paranoia_suspiciousness', 'Psychosis',
+                'Psychiatric_admissions', 'Suicidal_ideation')
+cog_gen_list <- c('Amnesia', 'Confabulations', 'Dementia', 'Forgetfulness' , 'Impaired_recognition', 
+                  'Imprinting_disturbances', 'Memory_impairment', 'Apathy_inertia', 'Bradyphrenia', 'Disinhibition', 
+                  'Hyperorality', 'Loss_of_decorum',  'Aphasia', 'Apraxia', 
+                  'Fatigue', 'Executive_function_disorder', 'Language_impairment', 
+                  'Word_finding_problems', 'Facade_behavior', 'Cachexia', 'Day_care', 'Help_in_ADL',
+                  'Admission_to_nursing_home', 'Declined_deteriorated_health', 'Reduces_oral_intake',
+                  'Communication_problems', 'Concentration_problems',
+                 'Headache_migraine', 'Seizures', 'Sleep_disturbances', 'Stress', 
+                  'Vivid_dreaming', 'Weight_loss')
+cog_symp_list <- c('Amnesia', 'Dementia', 'Confabulations',
+                   'Dementia', 'Forgetfulness', 'Head_turning_sign',
+                   'Impaired_recognition', 'Imprinting_disturbances',
+                   'Memory_impairment', 'Apathy_inertia', 'Bradyphrenia',
+                   'Disinhibition', 'Frontal_release_signs', 'Hyperorality',
+                   'Loss_of_decorum', 'Loss_of_sympathy', 'Aphasia', 'Apraxia',
+                   'Impaired_comprehension', 'Apathy_inertia', 'Language_impairment',
+                   'Word_finding_problems', 'Facade_behavior', 'Admission_to_nursing_home')
+gen_symp <- c('Cachexia', 'Day_care', 'Help_in_ADL', 'Admission_to_nursing_home',
+              'Declined_deteriorated_health', 'Reduces_oral_intake', 'Communication_problems',
+              'Concentration_problems', 'Headache_migraine', 'Seizures', 'Sleep_disturbances',
+              'Stress', 'Vivid_dreaming', 'Weight_loss')
+
+# subset on the symptomps that are pressent in the analysis ,
+# AD/CON: append(cog_gen_list, list_psych) or Psy conditions list_psych
+subset_symptoms <- subset(df.t.subset, df.t.subset$symptom %in% append(cog_gen_list, list_psych))
+# head(unique(s$symptom ), n = 20)
+df.signs.symptoms  <- df.t[, colnames(df.t) %in% cog_symp_list]
+
+```
+
+
+### Step 9, create radarplot
+
+```{r}
+# create radarplot
+(radarchart1 <- radarchart(df.signs.symptoms, , axistype=1 ,
+                           #custom polygon
+    pcol=c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" ), 
+    pfcol = adjustcolor( c("#E66912", "#016367", "#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b", "#6E3562", "red" ) , alpha.f = 0.1) , plwd=2 , plty=1,
+                           #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", caxislabels=c(" "," "," "," "," "), cglwd=0.6,
+                           #custom labels
+    vlcex=0.5, palcex = 20
+                           # title
+    ))
+
+png(filename =paste(ROOT_FOLDER ,"/Output/clusts/img/", "radarplot_symptoms",".png", sep = ""), width = 2000, height = 1000, units = 'px', res = 130)
+radarchart(df.signs.symptoms, , axistype=1 ,
+           #custom polygon
+    pcol= c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" )  , pfcol=adjustcolor(   c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" ) , alpha.f = 0.1) , plwd=2 , plty=1,
+           #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", caxislabels=c(" "," "," "," "," "), cglwd=0.6,
+           #custom labels
+    vlcex=.74, palcex = 20
+           # title
+)
+
+# legend can be altered by inserting a differend list after legend =
+legend(x=1.5, y=1, legend = row.names(df.signs.symptoms[-c(1, 2),]), bty = "n", pch=15 , col=  adjustcolor(c("#E66912", "#016367", "#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b", "#6E3562", "red" ), alpha.f = 0.3) , text.col = "grey", cex=2, pt.cex=3)
+
+dev.off()
+```
+
+
+Radar-chart that with the first 6 clusters, independent form each other
+
+```{r}
+# png(filename =paste(ROOT_FOLDER ,"/Output/clusts/img/", "symptom_coherance_clust_1_6",".png", sep = ""), width = 2000, height = 1000, units = 'px', res = 130)
+# #length(unique(data_frame.clust.summed$cluster))
+# par(mfrow = c(2,3))
+# op <- par(mar = c(1, 1, 1, 1))
+# for(i in 1:6){
+#     (radarchart(df.signs.symptoms[c(1, 2, i+2), ], , axistype=0.9 ,
+#                 #custom polygon
+#         pcol=alphabet2(12)[i]  , pfcol=adjustcolor(alphabet(12)[i] , alpha.f = 0.1) , plwd=2 , plty=1,
+#                 #custom the grid
+#         cglcol="grey", cglty=2, axislabcol="grey", caxislabels=c(" "," "," "," "," "), cglwd=0.3,
+#                 #custom labels
+#         vlcex=0.9,
+#                 # title
+#         title = row.names(df.signs.symptoms)[i + 2]
+#         ))}
+# par(op)
+# # legend(x=1.5, y=1, legend = row.names(ee[-c(1,2),]), bty = "n", pch=15 , col=  adjustcolor(alphabet2(12), alpha.f = 0.3) , text.col = "grey", cex=1.2, pt.cex=3)
+#
+# dev.off()
+```
+
+
+Only needed when there are more than 6 clusters same code as above
+```{r}
+
+# png(filename =paste(ROOT_FOLDER ,"/Output/clusts/img/", "symptom_coherance_clust_7_12",".png", sep = ""), width = 2000, height = 1000, units = 'px', res = 130)
+# #length(unique(data_frame.clust.summed$cluster))
+# op <- par(mar = c(1, 1, 1, 1))
+# par(mfrow = c(2,3))
+# for(i in 6:12){
+# (   radarchart( ee[c(1, 2, i+2), ], , axistype=1 ,
+#     #custom polygon
+#     pcol=alphabet2(12)[i]  , pfcol=adjustcolor(alphabet(12)[i] , alpha.f = 0.1) , plwd=2 , plty=1,
+#     #custom the grid
+#     cglcol="grey", cglty=1, axislabcol="grey", caxislabels=c(" "," "," "," "," "), cglwd=0.3,
+#     #custom labels
+#     vlcex=0.8,
+#     # title
+#     title = row.names(ee)[i + 2]
+#     ))
+#
+#   }
+# par(op)
+#
+# # legend(x=1.5, y=1, legend = row.names(ee[-c(1,2),]), bty = "n", pch=15 , col=  adjustcolor(alphabet2(12), alpha.f = 0.3) , text.col = "grey", cex=1.2, pt.cex=3)
+#
+# dev.off()
+```
+
+### Step, 10 temporal data visualiser
+
+```{r}
+
+df.temp <- read.csv(paste(ROOT_FOLDER, TEMPORAL_FILE, sep = ""), row.name  = 1)
+
+# define bucket size, is not neede to change bucket size of 1 is perfect or visualization.
+# if you want to change this variable, also change the input data.
+bucket_size <- 1
+
+df.info <- list()
+for (i in c(1:clusters)){
+  clust.temp <- df.clusts[df.clusts$cluster == i,]
+  clust_col_sum <- (colSums(df.temp[row.names(df.temp) %in% row.names(clust.temp),][1:(dim(df.temp)[2]-3)]) / bucket_size) / (dim(clust.temp)[1]) * 100
+  df.info[[paste0("clust", i)]] <- clust_col_sum
+}
+df.info <- do.call(cbind, df.info)
+
+# extract the years that a sign/symptoms occured
+extract_year_symptom <- function(df) {
+  df$names  <- row.names(df)
+  df$Year <- gsub("[a-z.]+", "", row.names(df))
+  df$Year <- gsub("[A-Z_]+", "", df$Year)
+  df$Year <- as.double(df$Year)
+  df$symptom <- gsub("[X]", "", row.names(df) )
+  df$symptom <- gsub("[0-9]+.", "", df$symptom )
+  return(df)
+}
+
+df_char_vis <- extract_year_symptom(data.frame(df.info))
+
+linegraph_temporal_data("ALL",colnames(df.info),years_end, "rev")
+print("Finished....")
+
+```
+

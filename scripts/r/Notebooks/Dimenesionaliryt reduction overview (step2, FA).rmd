@@ -1,0 +1,135 @@
+---
+title: "Notebook FA"
+output: html_notebook
+---
+
+### Loading library's
+```{r, warning = False, message = False}
+library(psych)
+library(Dict)
+library(paran)
+library(MASS)
+```
+
+### Step 1, Loading source files and file paths
+```{r}
+# add the path to your root
+path.ro.root <- ""
+# file-location file (Stores all the predifined locations in file "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R")
+source(paste(path.ro.root, "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R", sep = ""))
+# load the graph functions that are needed for the fa anlysis visualization.
+source(paste(ROOT_FOLDER, "/scripts/r/graphs/FA/plots_FA.r", sep = ""))
+```
+
+### Step2, read files.
+
+```{r}
+# reads the file that is created in step1 and holds the output of the PCA
+pca.df.temporal <- read.csv(paste0(ROOT_FOLDER, "/Output/PCA/ouput_pca.csv"), row.names = 1)
+# read the other file that is created in step1 and hold the subbseted df which is parsed in
+# the first halfe of step1
+df.temp <- read.csv(paste0(ROOT_FOLDER, "/Output/PCA/subsetted_df.csv"), row.names = 1)
+```
+
+### Step4, run FA.
+It compares three methods (WLS, ML, PA)
+with each other with and without COV and COR matrix.
+```{r, warning = F, message = F, error = F}
+
+# number of factors
+factors <- 3
+# Factor anlysis PA with cov matrix
+(pa  <- (fa(pca.df.temporal, nfactors = as.integer(factors)  ,rotate= "Varimax", fm = "pa",
+                                  residuals = FALSE, SMC=FALSE,  n.iter = 25,  cor= "cov")))
+
+# Factor anlysis ML with cov matrix
+(ml  <- (fa(pca.df.temporal, nfactors = as.integer(factors) ,rotate= "Varimax", fm = "ml",
+                                  residuals = FALSE, SMC=FALSE, cor = "cov")))
+
+# Factor anlysis WLS with cov matrix
+(wls  <- (fa(pca.df.temporal, nfactors = as.integer(factors)  ,rotate= "Varimax", fm = "wls",
+                                  residuals = FALSE, SMC=FALSE,  cor= "cov", n.iter= 25)))
+
+# Factor anlysis PA with cor matrix
+(pa.cor  <- (fa(pca.df.temporal, nfactors = as.integer(factors)  ,rotate= "Varimax", fm = "pa",
+                                  residuals = FALSE, SMC=FALSE,  n.iter = 25,  cor= "cor")))
+
+# Factor anlysis ML with cor matrix
+(ml.cor  <- (fa(pca.df.temporal, nfactors = as.integer(factors) ,rotate= "Varimax", fm = "ml",
+                residuals = FALSE, SMC=FALSE, cor = "cor")))
+
+# Factor anlysis wls with cor matrix
+ (wls.cor  <- (fa(pca.df.temporal, nfactors = as.integer(factors)  ,rotate= "Varimax", fm = "wls",
+                                  residuals = FALSE, SMC=FALSE,  cor= "cor", n.iter= 25)))
+
+```
+
+### Step4, return best methode based on the Cumulative sum of the factor analysis.
+
+```{r}
+# creates dict with the fa, cov and cor
+cum_list <- Dict$new(
+                     "Principal Axisis cov"  = pa,
+                     "Maximum likelihood cov"  = ml,
+                      "Weighted least squared cov" = wls,
+                     "Principal Axisis cor"  = pa.cor,
+                     "Maximum likelihood cor"  = ml.cor,
+                      "Weighted least squared cor" = wls.cor)
+
+# prints cummulative sum
+wls$Vaccounted[3,]
+wls.cor$Vaccounted[3,]
+pa$Vaccounted[3,]
+pa.cor$Vaccounted[3,]
+ml$Vaccounted[3,]
+ml.cor$Vaccounted[3,]
+
+h <- 0
+method_name <- ""
+method <- ""
+for (i in seq_along(cum_list$keys)){
+  if (h < max(cum_list$get(i)$Vaccounted[3,])){
+      print(cum_list$get(i)$Vaccounted[3,])
+      h <- max(cum_list$get(i)$Vaccounted[3,])
+      method <- cum_list$get(i)
+      method_name <- cum_list$keys[i]}
+}
+# prints 'best' method
+print(paste("Best Method, based on cummalitive sum: ", method_name, ",", "Cumsum: ", round(h, 3)))
+```
+
+# Step 4, Save information of the factor analysis.
+```{r}
+# assigning data
+fa.df.temp <- data.frame(method$scores)
+(fa.loadings <- method$loadings)
+# writing data to the output map.
+write.csv(fa.df.temp, paste(ROOT_FOLDER, "/Output/FA/factor_analysis.csv", sep = "") , row.names=F)
+print(paste("Dataframe; with compontes is saved at: ", ROOT_FOLDER, "/Output/FA/factor_analysis.csv", sep = ""))
+write.csv(fa.loadings, paste(ROOT_FOLDER, "/Output/FA/fa_loadings.csv", sep = "") , row.names=F)
+print(paste("Dataframe; with fa loadings is saved at: ", ROOT_FOLDER, "/Output/FA/fa_loadings.csv", sep = ""))
+
+
+```
+
+# Step 5, visualize scatter plot.
+
+```{r}
+
+# bi plot returns a scatter plot for the fa's
+# input:
+# Fa: output of fa/fa.sapa function,
+# data: df that is the output form the pca.
+# method: is the name of fa method
+# rotation: name of rotation technique
+# fa1 and fa2: variable on x and y axsis
+fa1 <- biplot.fa(method, df.temp, method = as.character(method_name), rotation = "Varimax", fa1 = 1, fa2 = 2)+ labs(tag = "A") +theme(plot.title = element_text(hjust = 0.5),
+        plot.tag = element_text(size = 15),
+        plot.tag.position = c(0.1, .90))
+
+# bi plot returns a ggplot, this makes it possible to extend
+# and use ggarrange to tailer these plots to your liking.
+g<- ggarrange(fa1, ,ncol = 2, nrow = 2,   common.legend = TRUE)
+ggsave(file=paste0(ROOT_FOLDER, "/Output/FA/img/biplot.pdf"), g, width = 13 , height = 10, dpi = 300)
+```
+

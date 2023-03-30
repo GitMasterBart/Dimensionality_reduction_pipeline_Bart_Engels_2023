@@ -8,12 +8,12 @@ library(psych)
 library(Dict)
 library(paran)
 
-source(paste("/Users/bengels/Desktop/stage_umcg2022/scripts", "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R", sep = ""))
+source(paste("/", "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R", sep = ""))
 pca.df.temporal <- read.csv(paste(ROOT_FOLDER,"/Output/ouput_pca.csv", sep = ""), row.names = 1)
 df.gen <- read.csv(paste(ROOT_FOLDER, "/Input/General_information_13-07-2022_FULL.csv", sep = ""), row.names = 1)
 change_NBB_Id <- function(df) {
-  row.names(df) <- gsub(" ", ".", row.names(df))
-  row.names(df) <- gsub("-", ".", row.names(df))
+  row.names(df) <- gsub(" ", "../..", row.names(df))
+  row.names(df) <- gsub("-", "../..", row.names(df))
   return (df)
 }
 

@@ -1,0 +1,77 @@
+---
+title:"k-means Notebook"
+output: html_notebook
+---
+
+### Loading library's
+```{r}
+library(NbClust)
+library(ggplot2)
+library(ggstream)
+library(colorspace)
+library(tidyverse)
+```
+
+### Step1, Loading source files
+```{r, warning = False, message = False}
+# add the path to your root
+path.ro.root <- ""
+# file-location file (Stores all the predifined locations in file "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R")
+source(paste(path.ro.root, "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R", sep = ""))
+source(paste0(ROOT_FOLDER, "/scripts/r/graphs/temporal_data_visualiser.R"))
+source(paste0(ROOT_FOLDER, "/scripts/r/graphs/plots_factor_analysis.R"))
+source(paste0(ROOT_FOLDER, "/scripts/r/graphs/stackbarplot.R"))
+fa.df.temp <- read.csv(paste0(ROOT_FOLDER, "/Output/FA/factor_analysis.csv"))
+```
+
+### Step 2, load files
+
+```{r}
+# output data FA
+fa.df.temp <- read.csv(paste0(ROOT_FOLDER, "/Output/FA/factor_analysis.csv"))
+# output data, after file parsing
+df.temp <- read.csv(paste0(ROOT_FOLDER, "/Output/PCA/subsetted_df.csv"), row.names = 1)
+```
+
+### Step3, set variables.
+Birth: 100
+Death:20
+You can off-course set your own year limit.
+```{r}
+years_end <- 110
+```
+### Step 4, Choose the appropriate k for k-means:
+More information on: https://www.jstatsoft.org/article/view/v061i06
+return's a matrix with recommended values for k
+```{r}
+
+technique <- c("all")
+
+nb_list <- c()
+for (i in technique){
+   res.2  <- NbClust(fa.df.temp, distance = "euclidean", min.nc = 2, max.nc = 15, method = "ward.D2", index = i )
+   nb_list <- append(nb_list, res.2 $Best.nc[1])
+}
+
+writeLines(technique, paste0(ROOT_FOLDER, "/Output/k-means/", "cluster_method.txt"))
+
+table(nb_list)
+```
+
+### Step5, Perform k-means clustering.
+
+```{r}
+# number of clusterd that are
+clusters <- 4
+
+# Perform k-means clustering
+km.temp <- kmeans(fa.df.temp, clusters, nstart=25)
+df.temp.fa.clusters <-
+  data.frame(row.names = row.names(df.temp), fa.df.temp,
+             cluster = km.temp$cluster,
+             main_diagnosis = df.temp$Main_diagnosis)
+# write to data_file to save it:
+# save cluster overview on the diagnosis
+write.csv(df.temp.fa.clusters, paste0(ROOT_FOLDER, "/Output/k-means/cluster_information.csv"), row.names=T)
+print(paste0("Dataframe; with cluster information is saved at: ", ROOT_FOLDER, "/Output/k-means/cluster_information.csv"))
+```

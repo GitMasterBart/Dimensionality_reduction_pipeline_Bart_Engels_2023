@@ -18,7 +18,7 @@ library(ggpubr)
 transpose_df <- function (df) {
   df <- as.data.frame(t(df))
   row.names(df) < df$X
-  #colnames(df) <-df[1,]
+  #colnames(data_frame) <-data_frame[1,]
   df$X <- NULL
   df <- sapply(df, function (x) as.integer(x))
   return(df[1:80])
@@ -70,13 +70,24 @@ ggplot_symptomp_diagnosis.total <- function(data, c){
 
 ggplot_symptomp_coherence <- function(df.thumb, clust) {
   
-  # df subset df.thumb on clust1 data
+  # data_frame subset data_frame.thumb on clust1 data
   df.logn1 <- df.thumb
+  Psychiatric = c("Aggressive_behavior", "Agitation", "Anxiety",
+                    "Changed_moods_emotions", "Compulsive_behavior",
+                    "Confusion", "Day_night_rhythm_disturbances" ,
+                    "Delirium", "Delusions", "Depressed_mood",
+                    "Disorientation", "Hallucinations",
+                    "Lack_of_insight",  "Mania",
+                    "Paranoia_suspiciousness", "Psychiatric_admissions",
+                    "Psychosis", "Restlessness",
+                    "Suicidal_ideation" , "Wandering" )
+
+
   df.Sumfreq.symptomps <- 
     data.frame(sum = 
                  colSums(df.logn1[row.names(df.thumb)
                                   %in% row.names(clust),][1:80]))
-  
+
   df <- data.frame(row.names = 
                      head(row.names(df.Sumfreq.symptomps)
                           [order(df.Sumfreq.symptomps$sum, decreasing = T)],
@@ -84,7 +95,7 @@ ggplot_symptomp_coherence <- function(df.thumb, clust) {
                      head(df.Sumfreq.symptomps
                           [order(df.Sumfreq.symptomps$sum, decreasing = T),],
                           n =15) )
-  
+
   # group the symptomps per domain
   c.groupings.freq <- function(v){
     
@@ -142,24 +153,24 @@ ggplot_symptomp_coherence <- function(df.thumb, clust) {
                                                              %in% General,
                                                              yes = "General", 
                                                              no =  "red"))))))}
-  
-  
+  print(df)
   # plot Symptoms coherence 
   return (ggplot(data = df, 
                  aes(x = reorder(row.names(df),
-                                 -abs(df$sum)), y =df$sum , fill =c.groupings.freq(df) )) +
+                                 -abs(df$sum)), y =df$sum/sum(df.Sumfreq.symptomps$sum)*100 , fill =c.groupings.freq(df) )) +
             geom_col() +
             labs(x = "", y = "")+
-            theme(axis.text.x = element_text(angle = 90, size = 5)) +
+            theme(axis.text.x = element_text(angle = 90, size = 9)) +
             scale_fill_manual(values = c("Cognitive" = "#E7BA52",
                                          "Sensory" = "#8CA252",
                                          "Psychiatric" = "#AD494A",
                                          "Motor"= "#393B79",
                                          "General" = "#A55194")) +
+            coord_flip() +
             labs(fill="Symptoms:") +
-            theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-                  legend.text = element_text(size = 6), 
-                  legend.title = element_text(size = 8), 
+            theme(axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1),
+                  legend.text = element_text(size = 12),
+                  legend.title = element_text(size = 12),
                   legend.key.size = unit(.5, 'cm')))}
 
 ggplot_orthongalD_age <- function(data){
@@ -214,7 +225,7 @@ ggplot_orthongalD_sex.v2 <- function(clust, data){
                                         "M" ="navey")))}
 
 
-#ggplot_orthongalD_sex.v2(clust.1, df.thumb)
+#ggplot_orthongalD_sex.v2(clust.1, data_frame.thumb)
 
 
 min_max_norm <- function(x) {
@@ -277,7 +288,7 @@ create_count_matrix <- function(data, group_var) {
   # Return the count matrix
   return(count_matrix)
 }
-#ggplot_orthongalD_diagnosis(df.thumb,clust.1)
+#ggplot_orthongalD_diagnosis(data_frame.thumb,clust.1)
 # the frequency of the diagnosis in cluster 1
 ggplot_orthongalD_diagnosis <- function(data, c){
   
@@ -333,8 +344,8 @@ biplot.fa <- function(fa, data, method, rotation, fa1, fa2) { return(
              color = data$Main_diagnosis)) + 
     geom_point() +
     theme_bw() +
-    xlab("Factor1") + 
-    ylab("Factor2") +
+    xlab(paste("Factor", fa1)) +
+    ylab(paste("Factor", fa2)) +
     ggtitle(paste(method,"Factor analysis, rotation:", rotation)) +
     scale_color_manual(values = c("CON" = "#6E3562",
                                   "AD" ="#E66912",
@@ -353,3 +364,14 @@ biplot.fa <- function(fa, data, method, rotation, fa1, fa2) { return(
                                   "SCHIZ" = "#008000",
                                   "VD" = "red"
     ), name = "Diagnosis:") )}
+
+
+barclustercount <- function(df.clusts) { return( ggplot(df.clusts, aes(x=Var1, y=Freq, fill = Var1)) +
+  geom_bar(stat = "identity") +
+    theme_bw()+
+    labs(tag = "B") +theme(plot.title = element_text(hjust = 0.5),
+        plot.tag = element_text(size = 15),
+        plot.tag.position = c(.95, .95)) +
+    geom_text(aes(label =Freq ), vjust=-.9)+
+    xlab("Clusters") +
+  scale_fill_manual(values=c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562" , "red"), name = "Clusters"))}

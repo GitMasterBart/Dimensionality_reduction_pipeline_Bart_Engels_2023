@@ -124,6 +124,37 @@ class PickleToTempDeath(PickleToTempBirth):
         data_frame = generic_functions.change_nan_to_0(data_frame)
         self.data_frame = data_frame
 
+class PickleToTempPsySymptom(PickleToTempBirth):
+    """
+    Input: Pickle file in the form of a dataframe
+    Output: temporal csv file with sign and symptoms for n amount of years,
+    defined as bucked_size
+    Steps: select: sings/symptoms -> put in dataframe ->
+    transform to temporal dataframe where year of
+    occurrences is linked to sing/symptom
+    """
+
+    def set_df(self):
+        """
+        Transforms the pickle-file into a data-frame that is split in the given bucket size (n).
+        +----------------------------------------------------------------------------------------+
+        |            {Donors}        |  {years = n }{sign/symptom} | {years = n }{sign/symptom}  |
+        |         {NBB_YEAR_Case}    |         {occurrence}                {occurrence}          |
+        +----------------------------------------------------------------------------------------+
+
+        Normalization: Death
+        """
+        sign_sym = generic_functions.select_domains(self.domain_list)
+        donor_dict = {}
+        for i in tqdm(self.pickle_file):
+            if pickle_parser.dict_to_df_norm_symptom_bucketsize_n(self.pickle_file.get(i)
+                                                                  ) != {}:
+                donor_dict[i] = pickle_parser.dict_to_df_norm_symptom_bucketsize_n(
+                    self.pickle_file.get(i))
+            generic_functions.remove_empty_values(donor_dict)
+        data_frame = pd.DataFrame.from_dict(donor_dict, orient="index")
+        data_frame = generic_functions.change_nan_to_0(data_frame)
+        self.data_frame = data_frame
 
 def main():
     """
@@ -148,8 +179,11 @@ def main():
     elif args.normalization.lower() == "death":
         temporal_dataframe_transformation = PickleToTempDeath(args.domain_list, args.bucket_size,
                                                               args.csv_filename)
+    elif args.normalization.lower() == "psy":
+        temporal_dataframe_transformation = PickleToTempPsySymptom(args.domain_list, args.bucket_size,
+                                                              args.csv_filename)
     else:
-        raise Exception("Give as a fourth argument birth or death.. nothing else")
+        raise Exception("Give as a fourth argument birth,psy or death.. nothing else")
     temporal_dataframe_transformation.set_df()
     temporal_dataframe_transformation.set_df_gen()
     temporal_dataframe_transformation.set_csv()

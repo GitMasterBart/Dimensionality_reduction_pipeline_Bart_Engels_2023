@@ -2,10 +2,12 @@
 
 
 import ast
-import pickle
+from pickle import load
 import pandas as pd
 import file_names
 
+
+# Get pandas Version
 
 def to_hierarchical(data_frame, column):
     """
@@ -62,7 +64,7 @@ def open_pickle(file):
     """
     picke_file = file
     with open(picke_file, 'rb') as file:
-        boolean_temporal_dfs = pickle.load(file)
+        boolean_temporal_dfs = load(file)
     return boolean_temporal_dfs
 
 

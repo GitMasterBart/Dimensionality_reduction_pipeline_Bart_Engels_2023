@@ -1,18 +1,20 @@
+#!/usr/bin/env Rscript
 
 
+linegraph_temporal_data <- function( folder, clusts, end.year, direct) {
+    #  this function returns a line diagram that
+    #
+    #
+    library(NbClust)
+    library(ggplot2)
+    library(ggstream)
+    library(colorspace)
+    library(tidyverse)
+    library(RColorBrewer)
 
-linegraph_temporal_data <- function( folder, clusts, end.year) {
-  library(NbClust)
-library(ggplot2)
-library(ggstream)
-library(colorspace)
-library(tidyverse)
 
        for (i in unique(df_char_vis$symptom)[1:80]){
          levels <- c(i)
-  # end.year <- 40 #max(df_char_vis$Year)
-  # clusts <-  c("clust1", "clust5", "clust7") #colnames(df.info)
-
 
     create_df_best_chars <- function(symptom_list){
       df_best_chars <- tibble(
@@ -20,72 +22,23 @@ library(tidyverse)
         char_popular = symptom_list)
       return(df_best_chars)
     }
-    pal <- c(
-      "#8CA252", lighten("#8CA252", .25, space = "HLS"),
-      "#809c13", lighten("#809c13", .2, space = "HLS"),
-      "#607c3c", lighten("#607c3c", .2, space = "HLS")
 
-    )
-
-    pal <- c(
-      "#FFB400", lighten("#8CA252", .25, space = "HLS"),
-      "#C20008", lighten("#6E3562", .2, space = "HLS"),
-      "#13AFEF", lighten("#595A52", .25, space = "HLS"),
-      "#8E038E", lighten("#FBCE3A", .2, space = "HLS"),
-      "#595A52", lighten("#8390fa", .15, space = "HLS"),
-      "#008000", lighten("#6495ED", .25, space = "HLS"),
-      "#D2691E", lighten("#00cecb", .2, space = "HLS"),
-      "#FF4500", lighten("#d1495b", .2, space = "HLS")
-
-    )
-    # df_char_vis <- df_char_vis %>%
-    #   relocate(clust2, .before = clust4 )
-
+  pal <- c("#E66912", "#016367","#8CA252", "#D43649", "#9E3A14", "#2a9d8f", "#9e2a2b","#6E3562", "red" )
 
     df <- df_char_vis[df_char_vis$symptom %in% levels,] %>%
       filter(Year < end.year)
 
-
-
-    df_smooth <- df %>%
-      group_by(symptom)  %>%
-      slice(1:4) %>%
-      mutate(
-        Year = c(
-          min(df$Year) - 2,
-          min(df$Year) - .5,
-          max(df$Year) + .5,
-          max(df$Year) + 2
-        ),
-        clust1 = c(0, .001, .001, 0),
-        clust2 = c(0, .001, .001, 0),
-        clust3 = c(0, .001, .001, 0),
-        clust4 = c(0, .001, .001, 0),
-        clust5 = c(0, .001, .001, 0)
-      )
-
-
-
     df_best_stream_fct <- df %>%
       bind_rows(df) %>%
       mutate(
-
         char_costume =  factor(symptom, levels = levels) ,
 
-
-        #char_costume = fct_reorder(char_costume, rank)
       ) %>%
       pivot_longer(
         cols = clusts,
         names_to = "parameter",
         values_to = "value"
       ) #%>%
-    #mutate(parameter = factor(parameter, levels = levels))
-
-
-
-
-
 
     g <-df_best_stream_fct %>%
       ggplot(aes(Year, value,
@@ -117,15 +70,15 @@ library(tidyverse)
           hjust = .5,
           margin = margin(20, 0, 5, 0)
         ),
-        #axis.text.y = element_blank(),
+        axis.text = element_text(size= 30),
         axis.title = element_blank(),
-        plot.background = element_rect(fill = "grey88", color = NA),
+        plot.background = element_rect(fill = "White", color = NA),
         panel.background = element_rect(fill = NA, color = NA),
         panel.grid = element_blank(),
         panel.spacing.y = unit(0, "lines"),
         strip.text.y = element_blank(),
         legend.position = "bottom",
-        legend.text = element_text(size = 15, color = "grey40"),
+        legend.text = element_text(size = 30, color = "grey40"),
         legend.box.margin = margin(t = 30),
         legend.background = element_rect(
           color = "grey40",
@@ -149,27 +102,26 @@ library(tidyverse)
         "rect",
         xmin = -Inf, xmax = 0,
         ymin = -Inf, ymax = Inf,
-        fill = "grey88"
+        fill = "white"
       ) +
       annotate(
         "rect",
         xmin = end.year, xmax = Inf,
         ymin = -Inf, ymax = Inf,
-        fill = "grey88"
+        fill = "white"
       ) +
       scale_x_continuous(
         limits = c(0, NA),
         breaks = c(0, seq(0, end.year, by = 10), end.year),
-        labels = glue::glue("Year\n{c(0, seq(0, {end.year}, by = 10), -{end.year})}"),
+        labels = glue::glue("Year\n{c(0, seq(0, {end.year}, by = 10), {end.year})}"),
+        position = "top"
+      ) + scale_x_continuous(
+        limits = c(0, NA),
+        breaks = c(0, seq(0, end.year, by = 10), end.year),
+        labels = glue::glue("Year\n{c(0, seq(0, {end.year}, by = 10), {end.year})}"),
         position = "top"
       ) +
-      # Customize labels of the horizontal axis
-      #scale_y_continuous(expand = c(.03, .03)) +
-      # This clip="off" is very important. It allows to have annotations anywhere
-      # in the plot, no matter they are not within the extent of
-      # the corresponding panel.
-       coord_cartesian(clip = "off") #+
-      #scale_x_reverse()
+      scale_x_reverse()
 
 
     g <- g +
@@ -180,5 +132,6 @@ library(tidyverse)
 
   g
 
-  ggsave(paste(ROOT_FOLDER ,"/Output/img/", folder, "/" , levels,".png", sep = ""), g ,width = 24, height = 9)
-}}
+  ggsave(paste(ROOT_FOLDER ,"/Output/clusts/img/temporal_patterns/", folder, "/" , levels,".png", sep = ""), g ,width = 24, height = 9)
+}
+}

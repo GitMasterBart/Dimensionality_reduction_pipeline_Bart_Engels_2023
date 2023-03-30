@@ -1,0 +1,243 @@
+---
+title: "PCA Notebook"
+output: html_document
+---
+
+### Loading library's:
+
+```{r, message =  FALSE , warning = FALSE }
+#!/usr/bin/env Rscript
+# Load libraries
+library(dplyr)
+library(ggplot2)
+library(ggsignif)
+library(tidyverse)
+library(PCAtools)
+library(MASS)
+library(paran)
+library(factoextra)
+library(mvoutlier)
+library(RColorBrewer)
+library(ggpubr)
+```
+### Step 1, Loading source files:
+```{r, message =  FALSE , warning = FALSE }
+# add the path to your root
+path.ro.root <- ""
+# file-location file (Stores all the predifined locations in file "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R")
+source(paste0(path.ro.root, "/Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/r/file_names.R.R"))
+# table one houses a dictionariy that represent the mos common
+# neurlogical degenerative diseases and pyschiatric conditions
+source(paste0(ROOT_FOLDER, "/scripts/r/table_files/table1.R"))
+# ggplot_PCA.r houses all the code for the visualization of the PCA.
+source(paste0(ROOT_FOLDER, "/scripts/r/graphs/PCA/plots_PCA.r"))
+# PCA_function.r, houses all the functions that are needed for
+# the visualization of the PCA. such as, list.pc.symptom.corr:
+# which loads file that processes and checks the differantiabilty of the daignosis per PC
+source(paste0(ROOT_FOLDER, "/scripts/r/functions/PCA/PCA_functions.r"))
+# general functions
+source(paste0(ROOT_FOLDER, "/scripts/r/functions/General/general_functions.r"))
+```
+
+### Step 2, load files:
+```{r}
+# this is the file that is used in the analysis, there are severa options that are possible here;
+# i) This is a file of the clinical history that includeds the temporal data;
+# ii) it is file of clinical history data does not included the temporal aspact and needs
+# further parsing. Go to Step 3
+df.symptoms.analysis <- read.csv(paste(ROOT_FOLDER, SYMPTOMFILE, sep = ""), row.name  = 1)
+
+# this file is needed for visualizaton of the temporal patterns of the danors that are clusterd in
+#certain clusters.
+df.temp.visualisation <- read.csv(paste(ROOT_FOLDER, TEMPORAL_FILE, sep = ""), row.name  = 1)
+
+```
+
+### Step3,  Merging files general information with clinical history
+Only needed when df.temp.analysis is a df with temporal aspect.
+```{r}
+# Step 3 is needed to add age to the df of the datasets that are parrsed with the included Python files
+# placed in the 'Dimensionality_reduction_pipeline_Bart_Engels_2023/scripts/py'. For further anlysis it
+# is needed that three columns are present, these are; Age, Main_diagnosis, Gender.
+# laoding general information file, neede only if data set is parssed with temporal aspect.
+df.gen <- read.csv(paste(ROOT_FOLDER, "/Input/General_information_13-07-2022_FULL.csv", sep = ""), row.names = 1)
+# Change NDD ID, removes " " and "_" to "." so all the df's have similair row.names
+# and can be merged.
+df.gen <- change_NBB_Id(df.gen)
+df.symptoms.analysis <- change_NBB_Id(df.symptoms.analysis)
+df.gen <- data.frame(row.names  = row.names(df.gen), Age = df.gen$Age)
+df.symptoms.analysis <- merge( df.symptoms.analysis, df.gen, by = 0, row.names = 0)
+row.names(df.symptoms.analysis) <- df.symptoms.analysis$Row.names
+df.symptoms.analysis$Row.names <- NULL
+```
+
+### Step 4, Removing all donors under 21.
+```{r}
+df.symptoms.analysis <- df.symptoms.analysis[df.symptoms.analysis$Age > 21,]
+```
+
+### Step5.1, removing redundant features temporal data.
+removing features in temporal data set, if you're working with a file without temporal aspect
+go to 5.2
+```{r}
+# remove redundand features for the data set; temporal_death_5years_cog_gen_signs_symptomps.csv.
+# this df is used for the subgroup AD/CON.
+# the years that are removde are the years beyond -20.
+df.symptoms.analysis1<-  merge(df.symptoms.analysis[0:99], df.symptoms.analysis[265:297] , by = 'row.names')
+row.names(df.symptoms.analysis1) <- df.symptoms.analysis1$Row.names
+df.symptoms.analysis1$Row.names <- NULL
+df.symptoms.analysis <- merge(df.symptoms.analysis1, df.symptoms.analysis[628:663], by = "row.names")
+row.names(df.symptoms.analysis) <- df.symptoms.analysis$Row.names
+df.symptoms.analysis$Row.names <- NULL
+```
+
+```{r}
+# remove redundand features for the data set; temporal_birth_20year_psy.csv.
+# this df is used for the subgroup MD/BP/SCHIZ/CON
+df.symptoms.analysis <- df.symptoms.analysis[41:123]
+```
+
+### Step5.2, removing redundant features without temporal data.
+
+```{r}
+
+# dependig on which data set, a lection is made on the features that are analysed for further anlysis
+# AD/CON include the signs/symptoms that are part of the cognitive and general domains. While int the
+# analyiss with psychiatric conditions only the domain with psychiatric conditions is included.
+
+# psychiatric signs/symptoms + (Main_diagnois, Age, Gender)
+psy_list <- c('Compulsive_behavior', 'Aggressive_behavior', 'Agitation', 'Anxiety', 'Changed_moods_emotions',
+              'Depressed_mood', 'Mania', 'Restlessness', 'Disorientation', 'Lack_of_insight', 'Wandering',
+              'Confusion', 'Day_night_rhythm_disturbances', 'Delirium', 'Delusions', 'Hallucinations',
+              'Paranoia_suspiciousness', 'Psychosis', 'Psychiatric_admissions', 'Suicidal_ideation', "Main_diagnosis", "Age", "Gender")
+# cognitive and general signs/symptoms + (Main_diagnois, Age, Gender)
+cog_gen_list <- c('Amnesia', 'Confabulations', 'Dementia', 'Forgetfulness' , 'Impaired_recognition',
+                  'Imprinting_disturbances', 'Memory_impairment', 'Apathy_inertia', 'Bradyphrenia', 'Disinhibition',
+                  'Hyperorality', 'Loss_of_decorum',  'Aphasia', 'Apraxia',
+                  'Fatigue', 'Executive_function_disorder', 'Language_impairment',
+                  'Word_finding_problems', 'Facade_behavior', 'Cachexia', 'Day_care', 'Help_in_ADL',
+                  'Admission_to_nursing_home', 'Declined_deteriorated_health', 'Reduces_oral_intake',
+                  'Communication_problems', 'Concentration_problems',
+                 'Headache_migraine', 'Seizures', 'Sleep_disturbances', 'Stress',
+                  'Vivid_dreaming', 'Weight_loss', "Main_diagnosis", "Age", "Gender")
+
+# creates subset.
+df.symptoms.analysis <- subset(df.symptoms.analysis, select= cog_gen_list)
+
+```
+
+### Step 6, Change names to the defined names in table1.
+```{r}
+# Transforms all main_daingosis to the diagnosis classified in table1
+for ( i in diseases.trans.dict$keys) {
+   df.symptoms.analysis$Main_diagnosis[df.symptoms.analysis$Main_diagnosis == i] <- diseases.trans.dict$get(i)
+ }
+```
+
+### Step 7, Choose diagnosis subset that needs to be analysed.
+```{r}
+
+# possible diagnosis subgroups based on the diagnosis in table1
+Table1 <- c('CON',"AD","PD", "PDD", "DLB", "VD", "FTD", "PSP", "ATAXIA", "MS", "MSA", "MD", "BP", "SCHIZ")
+Pcychiatric.CON <- c("SCHIZ", "MD" , "BP", "CON")
+AD.CON <- c("AD", "CON")
+
+# for this fucntion choise the subset that fits in the analysis, ofcours you can add your
+# own subgroup of diagnosis.
+df.symptoms.analysis <- subset_diagnosis(Pcychiatric.CON, df.symptoms.analysis)
+
+#prints the diangosis with the frequency of occurenc
+table(df.symptoms.analysis$Main_diagnosis)
+
+# Write this df to a file in the output directorie named subsetted_df.csv
+write.csv(df.symptoms.analysis, paste0(ROOT_FOLDER, "/Output/PCA/subsetted_df.csv"), row.names=T)
+# Print status
+print(paste0("Dataframe subset is saved at: ", ROOT_FOLDER, "/Output/PCA/subseted_df.csv"))
+```
+
+### Step 7, run PCA (prcomp)
+
+```{r}
+# perform a PCA and without the features (Main_diagnois, Age, Gender)
+pca.temp.t <- prcomp(log1p(df.symptoms.analysis[1:(dim(df.symptoms.analysis)[2]-3)]), scale. = F)
+# run a parallelPCA that is horn's parallel anlaysis that returns the optimal number
+# of PCs
+p <- parallelPCA(df.symptoms.analysis[1:(dim(df.symptoms.analysis)[2]-3)])
+print(p)
+```
+
+### Step8, checking differentiating ability of the PCs
+
+```{r}
+componet_list <- list.pc.symptom.corr(pca.temp.t, df.symptoms.analysis)
+  print(paste("List with components with differatiating abbility: ", list(componet_list)))
+```
+
+# Step 9, create a scree plot
+```{r}
+# compute total variance
+variance <- pca.temp.t$sdev^2 / sum(pca.temp.t$sdev^2)
+
+# varaince and intercept
+(plot.scree <- screePlot(variance, 5))
+
+# save scree plot
+ggsave(paste0(ROOT_FOLDER, "/Output/PCA/img/screeplot.pdf"), plot.scree )
+```
+
+### Step9, save the interesting PCs
+
+```{r}
+# as a example are the PCs 1 t/m 4 inluded in the list, it is
+# possible extand this list and add all the pcs that you think of as
+# important.
+componet_list <- c(1,2,3,4)
+
+pca.df.temporal <- data.frame(row.names = row.names(df.symptoms.analysis), pca.temp.t$x[,componet_list])
+
+write.csv(pca.df.temporal, paste(ROOT_FOLDER, "/Output/PCA/ouput_pca.csv", sep = "") , row.names= T)
+```
+
+### Step 10, Visualize the PCs with a bi-plot
+
+Depending on the PCs of interested, it is possible to visualize these PCs. the functions that are usable:
+* ggplot_pcaplot_sub
+* ggplot_pcaplot_sub_elips
+Both show bi-plots only ggplot_pcaplot_sub_elips adds a elips.
+
+```{r}
+
+# give the plot a title:
+title <- ""
+# list with diagnosis from step 7
+subset <- Pcychiatric.CON
+# A example of how to use the function:
+
+(pc1_pc2 <- ggplot_pcaplot_sub(pca.temp.t, df.symptoms.analysis,
+                               1,2, list_with_colored_diagnoses = subset ,name = title, scale = .5) +
+  labs(tag = "A") +theme(plot.title = element_text(hjust = 0.5),
+        plot.tag = element_text(size = 25),
+        plot.tag.position = c(0.15, .95)))
+
+# ggplot_pcaplot_sub and ggplot_pcaplot_sub_elips are functions that return plots, so it possible to
+# change there appearances, or put them in a ggarrange
+
+g<- ggarrange(pc1_pc2,pc3_pc4, pc5_pc6 ,ncol = 2, nrow = 2,  common.legend = TRUE)
+ggsave(file="PCA.pdf", g, width = 20 , height = 18, dpi = 150)
+```
+
+### Step 11, Loading heatmap.
+
+```{r}
+# returns the dimensions so it is possible to indentify the
+# number of features.
+dim(df.symptoms.analysis)
+
+# create a heatmap
+# input:
+# pc.x and pc.y, returns object like [,1:4] so the first 4
+# pc are used in this case.
+# f.1 and f.2 creat togehter a list with a range of
+# which features are showcased.
+own_heatmap(pca.temp.t, 1,4, 0, 25)
+```

@@ -45,8 +45,8 @@ main_diagnose_list <- read.csv("~/Desktop/stage_umcg2022/data_umcg/MainDiagnosis
 
 ## main_diagnose donorID convert
 #typeof(csv_generalinformation_t$DonorID)
-main_diagnose_linked_id$DonorID <- gsub("-", "../..", main_diagnose_linked_id$DonorID)
-main_diagnose_linked_id$DonorID <- gsub(" ", "../..", main_diagnose_linked_id$DonorID)
+main_diagnose_linked_id$DonorID <- gsub("-", "..", main_diagnose_linked_id$DonorID)
+main_diagnose_linked_id$DonorID <- gsub(" ", "..", main_diagnose_linked_id$DonorID)
 #head(main_diagnose_linked_id)
 
 
