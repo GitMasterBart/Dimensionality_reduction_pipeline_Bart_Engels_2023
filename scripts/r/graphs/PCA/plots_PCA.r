@@ -1,6 +1,7 @@
 
-# scree plot PCA returns the variance for range is 10 pcs
-screePlot <- function(variance, intercept ) {qplot(x = c(1:10), y = variance[1:10]) +
+screePlot <- function(variance, intercept ) {
+  # scree plot PCA returns the variance for range is 10 pcs
+  return(qplot(x = c(1:10), y = variance[1:10]) +
   geom_point() +
   geom_line() +
   geom_hline(yintercept=variance[intercept], linetype="dashed", color = "blue") +
@@ -11,18 +12,18 @@ screePlot <- function(variance, intercept ) {qplot(x = c(1:10), y = variance[1:1
           axis.title=element_text(size=12),
           legend.text = element_text(size = 12),
           legend.title = element_text(size = 12))+
-  theme_classic()}
+  theme_classic())}
 
-# returns a bi plot with elips,
-# variables:
-# PCA : PCA performed with pcromp
-# df, including Main_diagnosis, Age, Gender
-# pc_x: PC you want to visualize on the x-axisis
-# Pc_y: PC you want ot visualize on te y-axisis
-# name: String for the MAIN (Title)
-# scale: scale the Biplot so the signs/symptoms are readable
 ggplot_pcaplot_sub_elip <- function(pca, dataf, pc_x, pc_y, list_with_colored_diagnoses, name, scale) {
 
+  # returns a bi plot with elips,
+  # variables:
+  # PCA : PCA performed with pcromp
+  # df, including Main_diagnosis, Age, Gender
+  # pc_x: PC you want to visualize on the x-axisis
+  # Pc_y: PC you want ot visualize on te y-axisis
+  # name: String for the MAIN (Title)
+  # scale: scale the Biplot so the signs/symptoms are readable
   library(ggplot2)
 
   gg.ready.pca.data.norm.log1p <- data.frame(DonorID = rownames(dataf), pca$x ,Main_diagnosis= dataf$Main_diagnosis, Gender = dataf$Gender)
@@ -90,16 +91,16 @@ ggplot_pcaplot_sub_elip <- function(pca, dataf, pc_x, pc_y, list_with_colored_di
   return(ggplot_dynamic)}
 
 
-# returns a bi-plot
-# variables:
-# PCA : PCA performed with pcromp
-# df, including Main_diagnosis, Age, Gender
-# pc_x: PC you want to visualize on the x-axisis
-# Pc_y: PC you want ot visualize on te y-axisis
-# name: String for the MAIN (Title)
-# scale: scale the Biplot so the signs/symptoms are readable
-ggplot_pcaplot_sub <- function(pca, dataf, pc_x, pc_y, list_with_colored_diagnoses, name, scale) {
 
+ggplot_pcaplot_sub <- function(pca, dataf, pc_x, pc_y, list_with_colored_diagnoses, name, scale) {
+  # returns a bi-plot
+  # variables:
+  # PCA : PCA performed with pcromp
+  # df, including Main_diagnosis, Age, Gender
+  # pc_x: PC you want to visualize on the x-axisis
+  # Pc_y: PC you want ot visualize on te y-axisis
+  # name: String for the MAIN (Title)
+  # scale: scale the Biplot so the signs/symptoms are readable
   library(ggplot2)
 
 
@@ -135,9 +136,6 @@ ggplot_pcaplot_sub <- function(pca, dataf, pc_x, pc_y, list_with_colored_diagnos
           axis.title=element_text(size=25),
           legend.text = element_text(size = 25),
           legend.title = element_text(size = 25))+
-    # scale_color_viridis(discrete=TRUE, option="viridis") +
-
-    # ggtitle(paste("PCA plot of", pcx ,"and", pcy, "of", name )) +
     scale_color_manual(values = c("CON" = "#6E3562",
                                         "AD" ="#E66912",
                                         "FTD" = "#016367",
@@ -170,8 +168,14 @@ ggplot_pcaplot_sub <- function(pca, dataf, pc_x, pc_y, list_with_colored_diagnos
              label = PCAloadings$Variables, size = 5, face="bold", color = "blue")
   return(ggplot_dynamic)}
 
-own_heatmap <- function(pca,pc.x, pc.y, f.1,f.2  ){
 
+own_heatmap <- function(pca,pc.x, pc.y, f.1,f.2  ){
+  # create a heatmap
+  # input:
+  # pc.x and pc.y, returns object like [,1:4] so the first 4
+  # pc are used in this case.
+  # f.1 and f.2 creat togehter a list with a range of
+  # which features are showcased.
   library(ComplexHeatmap)
   library(RColorBrewer)
   .boxplot1 = anno_boxplot(pca$rotation[,pc.x:pc.y][f.1:f.2,], which = "row")
