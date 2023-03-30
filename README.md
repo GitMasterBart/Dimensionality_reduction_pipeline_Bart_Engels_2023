@@ -14,7 +14,7 @@
 
 1. [Abstract](#abstract)
 2. [Setup](#setup)
-   1. [Setup path to root](#setupt)
+   1. [Setup path to root](#setup-path)
    2. [Setup files](#setup-files)
 3. [References](#bibliografie)
 
@@ -43,7 +43,7 @@ and explore potential differences between and within NDD/psychiatric conditions
 
 <a name="setup"></a>
 ## Setup
-
+<a name="setup-path"></a>
 ### Setup path to root
 
 The first you need to setup the correct file paths. 
