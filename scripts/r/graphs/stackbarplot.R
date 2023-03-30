@@ -1,6 +1,6 @@
 subset <- c("MD", "BP", "SCHIZ", "PSYCH", "DEPRI, PSYCH", "DEV", "ASD, PSYCH", "ADHD, PSYCH", "PTSD, PSYCH" , "OCD, PSYCH","NARCO, PSYCH", "PSYCH, DEPMA")
 
-stack_bar_plot <- function (cluster_set) return (ggplot(cluster_set, aes(fill=main_diagnosis, y=abs(cluster), x=cluster)) +
+stack_bar_plot <- function (cluster_set) return (ggplot(cluster_set, aes(fill=main_diagnosis, y=abs(cluster), x=as.character(cluster))) +
            geom_bar(position="fill", stat="identity") +
            ggtitle("") +
            scale_fill_manual(values = c("CON" = "#6E3562",
@@ -38,20 +38,20 @@ stack_bar_plot <- function (cluster_set) return (ggplot(cluster_set, aes(fill=ma
           margin = margin(10, 0, 30, 0)
         ),
         plot.caption = element_text(
-          size = 9,
+          size = 15,
           color = "grey40",
           hjust = .5,
           margin = margin(20, 0, 5, 0)
         ),
         #axis.text.y = element_blank(),
         axis.title = element_blank(),
-        plot.background = element_rect(fill = "grey88", color = NA),
+        plot.background = element_rect(fill = "White", color = NA),
         panel.background = element_rect(fill = NA, color = NA),
         panel.grid = element_blank(),
         panel.spacing.y = unit(0, "lines"),
         strip.text.y = element_blank(),
         legend.position = "bottom",
-        legend.text = element_text(size = 9, color = "grey40"),
+        legend.text = element_text(size = 10, color = "grey40"),
         legend.box.margin = margin(t = 30),
         legend.background = element_rect(
           color = "grey40",
