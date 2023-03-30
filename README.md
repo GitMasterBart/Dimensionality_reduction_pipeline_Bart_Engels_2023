@@ -1,7 +1,7 @@
 # Dementia reduction
-
-*Contact:*
 <a name="contact"></a>
+*Contact:*
+<br>
 *Author: Bart Engels*
 <br>
 *Website: www.bartengels.eu* **Currently out of use**
