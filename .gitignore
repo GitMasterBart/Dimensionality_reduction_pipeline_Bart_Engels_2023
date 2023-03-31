@@ -2,7 +2,7 @@
 *~
 *.pyc
 *.swp
-
+.flowchart.png
 docs/_build
 build/
 dist/
