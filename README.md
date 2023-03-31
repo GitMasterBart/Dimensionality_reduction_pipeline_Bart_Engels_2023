@@ -10,6 +10,8 @@
 <br>
 *Version: V3.0*
 
+![Flowchart](.flowchart.png)
+*Figure1: A general overview of the workflow.*
 ## Table of Contents
 
 1. [Abstract](#abstract)
