@@ -1,5 +1,14 @@
 #!usr/bin/env python3
 
+"""
+This script contains functions that are used to transform a dictionary to a dataframe. The dictionary
+is created by the pickle_parser.py script. The functions in this script are used to create a
+dataframe that is normalized based on the birth year of the patient. The dataframe is created in such
+a way that the difference between the birth year of the patient and the symptom onset year is
+divided into buckets of a specified size. The final dataframe is returned in a flattened version
+using flatdict library.
+"""
+
 import re
 import flatdict
 
@@ -110,6 +119,7 @@ def dict_to_df_norm_death_bucketsize_n(dict_v, bucketsize, domain_dict):
             # Create a new key based on the difference between age at death and symptom onset year
             title = "Year" + str(0 - i)
             result = {}
+            # Create a new dictionary with certain keys removed and add it to final_dict
             if len(list_comprehension[i:i + bucketsize]) >= 2 and len(list_comprehension) > bucketsize:
                 for index_age in range((len(list_comprehension) // bucketsize) + 1):
                     try:
@@ -137,6 +147,7 @@ def dict_to_df_norm_death_bucketsize_n(dict_v, bucketsize, domain_dict):
                                       for key in set(result) | set(dict1)}
 
             else:
+                # Create a new dictionary with certain keys removed and add it to final_dict
                 dict1 = dict_v.get(int(list_comprehension[i:i + bucketsize][0]))
                 del dict1["neuropathological_diagnosis"]
                 del dict1["sum"]
@@ -183,15 +194,18 @@ def dict_to_df_norm_birth_bucketsize_n(dict, name, bucketsize, domain_dict):
                         dict1 = dict.get(int(r[i:i + bucketsize][index_age]))
                     except IndexError:
                         dict1 = None
+                    # If the dictionary is not empty, delete the keys that are not needed
                     if dict1 is not None:
                         del dict1["neuropathological_diagnosis"]
                         del dict1["sum"]
                         del dict1["age_at_death"]
                         del dict1["sex"]
                         key_list = []
+                        # If the domain_dict is not empty, delete the keys that are not in the domain_dict
                         for key in dict1.keys():
                             if key not in domain_dict:
                                 key_list.append(key)
+                        # Delete the keys that are not in the domain_dict
                         for key in key_list:
                             del dict1[key]
 
@@ -207,6 +221,15 @@ def dict_to_df_norm_birth_bucketsize_n(dict, name, bucketsize, domain_dict):
 
 
 def dict_to_df_norm_symptom_bucketsize_n(dict):
+    """
+    Under construction
+    This function takes a dictionary and returns a dataframe with the values normalized by the sum of the values in the
+    dictionary.
+    Args:
+        dict: A dictionary with symptom onset year as key and a dictionary with symptoms as keys and the number of
+        occurrences as values.
+    Returns: A dataframe with the values normalized by the sum of the values in the dictionary.
+    """
     # Create an empty final_dict
     final_dict = {}
     # Create a list of all values from dict
@@ -250,20 +273,3 @@ def dict_to_df_norm_symptom_bucketsize_n(dict):
     return flatdict.FlatDict(final_dict, delimiter=".")
 
 
-import generic_functions
-import file_names
-
-#
-def main():
-    pickle_file = generic_functions.open_pickle(file_names.PICKLE_FILE)
-    # print(pickle_file["NBB 1984-026"])
-    dict_to_df_norm_symptom_bucketsize_n(pickle_file["NBB 1992-075"] )
-#
-#     # donor_dict ={}
-#     # for i in pickle_file:
-#     #     if dict_to_df_norm_symptom_bucketsize_n(pickle_file[i]) != {}:
-#     #         donor_dict[i] = dict_to_df_norm_symptom_bucketsize_n(pickle_file[i])
-#     #
-#     # print(donor_dict)
-#
-main()
