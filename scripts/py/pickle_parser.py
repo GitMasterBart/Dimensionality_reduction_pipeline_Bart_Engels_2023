@@ -167,7 +167,22 @@ def dict_to_df_norm_death_bucketsize_n(dict_v, bucketsize, domain_dict):
     return flatdict.FlatDict(final_dict, delimiter=".")
 
 
-def dict_to_df_norm_birth_bucketsize_n(dict, name, bucketsize, domain_dict):
+def dict_to_df_norm_birth_bucketsize_n(dict, bucketsize, domain_dict):
+    """
+    IN CONSTRUCTION
+    This function takes in a dictionary, an interval, and a bucket size. It creates new keys based on the
+    difference between the age at birth of the patient and the symptom onset year. Keys are created in
+    such a way that the difference is divided into buckets of the specified size. The final dictionary is
+    returned in a flattened version using flatdict library.
+    Args:
+        dict: The original dictionary
+        name: The name of the dictionary
+        bucketsize: Size of the bucket used to divide the difference
+        domain_dict: The domain dictionary
+
+    Returns:The final dictionary in a flattened version using flatdict library
+
+    """
     # Create an empty final_dict
     final_dict = {}
     # Create a list of all values from dict
